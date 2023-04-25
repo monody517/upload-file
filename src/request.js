@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseURL = 'http://localhost:3001'
+const baseURL = 'http://10.125.134.191:8082'
 
 export const uploadFiles = (url,formData,onUploadProgress = () => {}) => {
     return axios({

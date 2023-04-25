@@ -14,6 +14,13 @@ export default defineConfig({
         port: 7001,
         headers: {
             'Access-Control-Allow-Origin': '*'
+        },
+        proxy: {
+            '/api': {
+                target: 'http://10.125.134.191:8082/',  //API服务地址
+                changeOrigin: true,             //开启跨域
+                rewrite: (path) => path.replace(/^\/api/, '')
+            },
         }
-    }
+    },
 })
