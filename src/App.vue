@@ -17,7 +17,6 @@ const fileChange = async (event) => {
     if(!file) return
     currFile.value = file
     fileChunkList.value = []
-    await getFileChunk(file)
     let {fileHash} = await getFileChunk(file)
     uploadFileChunks(fileHash);
 }
@@ -53,7 +52,6 @@ const getFileChunk = (file,chunkSize = DefaultChunkSize) => {
                 end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
             let chunk = blobSlice.call(file, start, end);
             fileChunkList.value.push({ chunk, size: chunk.size, name: currFile.value.name });
-            console.log(fileChunkList.value);
             fileReader.readAsArrayBuffer(chunk);
         }
         loadNext();
@@ -76,19 +74,20 @@ const onUploadProgress = (item) => (e) => {
 
 //  上传文件
 const uploadFileChunks = (fileHash) => {
-   const requests = fileChunkList.value.map((item,index)=> {
-        const formData = new FormData()
-        formData.append(`${currFile.value.name}-${fileHash}-${index}`, item.chunk);
-        formData.append("filename", currFile.value.name);
-        formData.append("hash", `${fileHash}-${index}`);
-        formData.append("fileHash", fileHash);
+    const requests = fileChunkList.value.map((item,index)=> {
+        const formData = {}
+        formData[`${currFile.value.name}-${fileHash}-${index}`] = item.chunk
+        formData['filename'] = currFile.value.name
+        formData['hash'] = `${fileHash}-${index}`
+        formData['fileHash'] = fileHash
+        console.log('formData',formData);
         return uploadFiles('/api/files/upload',formData,onUploadProgress(item))
     })
 
-    // Promise.all(requests).then(() => {
-    //     // 合并请求
-    //     mergeChunks('/mergeChunks', { size: DefaultChunkSize, filename: currFile.value.name });
-    // });
+    Promise.all(requests).then(() => {
+        // 合并请求
+        mergeChunks('/api/files/merge', { size: DefaultChunkSize, filename: currFile.value.name });
+    });
 }
 </script>
 
