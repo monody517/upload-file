@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as SparkMD5 from 'spark-md5';
-import {uploadFiles,mergeChunks} from './request.js';
+import {uploadFiles, mergeChunks, verifyFile} from './request.js';
 import {computed, ref} from "vue";
 
 //  默认分块文件大小
@@ -22,7 +22,12 @@ const fileChange = async (event) => {
 }
 
 //  获取文件分块
-const getFileChunk = (file,chunkSize = DefaultChunkSize) => {
+const getFileChunk = async (file,chunkSize = DefaultChunkSize) => {
+    const verifyData = await verifyFile('api/files/verify',{filename: currFile.value.name})
+    if(!verifyData.data.data){
+        window.alert(verifyData.data.message)
+        return
+    }
     return new Promise((resovle)=>{
         let blobSlice = File.prototype.slice,
             chunks = Math.ceil(file.size / chunkSize),
@@ -80,7 +85,6 @@ const uploadFileChunks = (fileHash) => {
         formData['filename'] = currFile.value.name
         formData['hash'] = `${fileHash}-${index}`
         formData['fileHash'] = fileHash
-        console.log('formData',formData);
         return uploadFiles('/api/files/upload',formData,onUploadProgress(item))
     })
 
